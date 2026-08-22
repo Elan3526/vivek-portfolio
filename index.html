@@ -1,0 +1,1711 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vivek Battu — Portfolio</title>
+<link rel="icon" type="image/png" href="assets/vv.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Caveat:wght@600;700&family=Anton&display=swap" rel="stylesheet" />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a0a0a;
+    --bg-panel: #121212;
+    --red: #e2231a;
+    --red-dim: #7a1410;
+    --white: #f5f5f5;
+    --gray: #9a9a9a;
+    --border: rgba(255, 255, 255, 0.12);
+  }
+
+  html, body {
+    background: var(--bg);
+    color: var(--white);
+    font-family: "Poppins", "Segoe UI", -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  ul { list-style: none; }
+  a { color: inherit; text-decoration: none; }
+
+  html { scroll-behavior: smooth; }
+
+  /* Single header row: role tag (left), nav (true center), freelance
+     availability (right). A 3-column grid — not flex space-between —
+     is what keeps the nav mathematically centered regardless of how
+     wide the left/right content is. */
+  .site-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 5;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 16px;
+    padding: 26px 56px;
+    transform: translateY(0);
+    transition: transform 0.35s ease;
+  }
+
+  /* Hidden while actively scrolling down; slides back in the moment
+     you scroll up. */
+  .site-header.header-hidden {
+    transform: translateY(-110%);
+  }
+
+  .header-left {
+    justify-self: start;
+  }
+
+  .header-right {
+    justify-self: end;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .site-nav {
+    justify-self: center;
+    display: flex;
+    gap: 36px;
+  }
+
+  .site-nav a {
+    position: relative;
+    padding-bottom: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #fff;
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.7);
+  }
+
+  .site-nav a::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 2px;
+    background: var(--red);
+    transform: scaleX(0);
+    transform-origin: center;
+    transition: transform 0.25s ease;
+  }
+
+  .site-nav a:hover::after {
+    transform: scaleX(1);
+  }
+
+  /* Hamburger toggle: hidden on desktop, only shown below the phone
+     breakpoint where the nav collapses into a full-screen menu. */
+  .nav-toggle {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    justify-self: end;
+  }
+
+  .nav-toggle span {
+    display: block;
+    height: 2px;
+    background: #fff;
+    border-radius: 2px;
+    transition: transform 0.25s ease, opacity 0.25s ease, background 0.25s ease;
+  }
+
+  .nav-toggle.is-open span:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+    background: var(--red);
+  }
+  .nav-toggle.is-open span:nth-child(2) {
+    opacity: 0;
+  }
+  .nav-toggle.is-open span:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+    background: var(--red);
+  }
+
+  .eyebrow {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  /* ============ FIXED BACKGROUND ANIMATION ============ */
+  /* The frame-sequence canvas is pinned behind the whole page. Its frame
+     advances as the entire page scrolls, and every section sits on top
+     of it with a translucent/blurred panel so the animation stays
+     visible underneath the content the whole way down. */
+
+  .bg-stage {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+  }
+
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .page {
+    position: relative;
+    z-index: 1;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.85), 0 1px 3px rgba(0, 0, 0, 0.9);
+  }
+
+  /* The hero is exactly one viewport tall PLUS a reserved strip at the
+     bottom (--reveal-reserve, measured by JS from the reveal row's real
+     height). The fold-spacer absorbs all space up to the first 100vh
+     mark so hero-main — and the name inside it — always sits flush at
+     the bottom-left of the first screen, on load, before any scrolling.
+     The reserved strip after it exists purely so the absolutely
+     positioned reveal row has real room to occupy without overlapping
+     the Projects section that follows. */
+  .hero {
+    height: calc(100vh + var(--reveal-reserve, 0px));
+    padding: 110px 56px 40px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .hero-fold-spacer {
+    flex: 1 1 auto;
+  }
+
+  .hero-reserve {
+    flex: 0 0 var(--reveal-reserve, 0px);
+  }
+
+  .hero-reveal .role-line,
+  .hero-reveal p,
+  .hero-reveal .worldwide,
+  .hero-stats {
+    will-change: transform, opacity;
+  }
+
+  .header-left .role-red { color: var(--red); }
+  .header-left div + div { color: var(--white); margin-top: 2px; }
+
+  .hero-main {
+    position: relative;
+  }
+
+  .hero-intro {
+    max-width: 480px;
+    text-shadow: 0 2px 24px rgba(0, 0, 0, 0.6);
+  }
+
+  /* Anchored right below the name (top: 100% of hero-main). Laid out
+     side-by-side with the stats so both reveal in on the same line as
+     you scroll. */
+  .hero-reveal-row {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    padding-top: 22px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 24px;
+  }
+
+  .hero-reveal {
+    max-width: 480px;
+  }
+
+  .hero-intro .hello {
+    font-size: 30px;
+    font-weight: 600;
+    color: var(--white);
+    font-family: "Caveat", cursive;
+  }
+
+  .hero-intro h1 {
+    font-family: "Anton", "Poppins", sans-serif;
+    font-size: clamp(46px, 8vw, 78px);
+    line-height: 0.98;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.01em;
+    margin-top: 6px;
+  }
+
+  .hero-reveal .role-line {
+    font-size: clamp(16px, 2vw, 20px);
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--red);
+  }
+
+  .hero-reveal p {
+    margin-top: 16px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--white);
+    max-width: 400px;
+  }
+
+  .hero-reveal .worldwide {
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .hero-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .hero-stats .stat + .stat {
+    border-top: 1px solid var(--border);
+    padding-top: 18px;
+  }
+
+  .hero-stats .stat .num {
+    font-family: "Anton", "Poppins", sans-serif;
+    font-size: 40px;
+    font-weight: 400;
+    line-height: 1;
+    color: var(--red);
+  }
+
+  .hero-stats .stat .label {
+    margin-top: 2px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--white);
+  }
+
+  .icon-circle {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+
+  /* ============ SHARED SECTION LAYOUT ============ */
+
+  section {
+    padding: 90px 56px;
+  }
+
+  .section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 48px;
+  }
+
+  .section-head h2 {
+    font-family: "Anton", "Poppins", sans-serif;
+    font-size: clamp(26px, 3vw, 36px);
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.01em;
+  }
+
+  .section-head .rule {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+    margin: 0 24px;
+  }
+
+  .view-all {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--red);
+    white-space: nowrap;
+  }
+
+  /* ============ ABOUT ME ============ */
+
+  .about-me-inner {
+    max-width: 780px;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .about-me-title {
+    font-family: "Anton", "Poppins", sans-serif;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: -0.03em;
+    line-height: 0.9;
+    white-space: nowrap;
+    font-size: clamp(64px, 17vw, 215px);
+    color: var(--red);
+  }
+
+  .about-me-sign {
+    margin-top: 18px;
+    font-family: "Caveat", cursive;
+    font-weight: 600;
+    font-size: clamp(34px, 5vw, 52px);
+    color: var(--white);
+  }
+
+  .about-me-text {
+    margin: 22px auto 0;
+    max-width: 640px;
+    font-size: 16px;
+    line-height: 1.75;
+    color: var(--white);
+  }
+
+  /* ============ WORK EXPERIENCE ============ */
+  /* Big logo on one side, content on the other — mirrored on the
+     second card, same pattern as the earlier image cards. */
+
+  .exp-list {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .exp-card {
+    position: relative;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 40px;
+    margin-top: 24px;
+    transition: border-color 0.4s ease, box-shadow 0.4s ease;
+  }
+
+  .exp-card:hover {
+    border-color: var(--red);
+    box-shadow: 0 0 0 1px var(--red), 0 20px 50px -20px rgba(226, 35, 26, 0.35);
+  }
+
+  .exp-card:first-child {
+    margin-top: 0;
+  }
+
+  .exp-body {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr;
+    gap: 40px;
+    align-items: center;
+  }
+
+  .exp-card-reverse .exp-body {
+    grid-template-columns: 1.4fr 1fr;
+  }
+
+  .exp-card-reverse .exp-content {
+    order: -1;
+  }
+
+  /* Image wipes open like a curtain as the card scrolls into view —
+     opening left-to-right normally, mirrored to right-to-left on the
+     reversed card so the motion always reads "outward" from the text. */
+  .exp-media {
+    aspect-ratio: 1 / 1;
+    border-radius: 14px;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+    overflow: hidden;
+    clip-path: inset(0 0 0 100%);
+    transition: clip-path 1s cubic-bezier(0.16, 0.84, 0.44, 1) 0.15s;
+  }
+
+  .exp-card.in-view .exp-media {
+    clip-path: inset(0 0 0 0%);
+  }
+
+  .exp-card-reverse .exp-media {
+    clip-path: inset(0 100% 0 0);
+  }
+
+  .exp-card-reverse.in-view .exp-media {
+    clip-path: inset(0 0 0 0);
+  }
+
+  .exp-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    transition: transform 0.6s ease;
+  }
+
+  .exp-card:hover .exp-media img {
+    transform: scale(1.06);
+  }
+
+  /* Content slides in from the side the image opens toward, arriving
+     just after the wipe finishes. */
+  .exp-content {
+    opacity: 0;
+    transform: translateX(36px);
+    transition: opacity 0.7s ease 0.35s, transform 0.7s cubic-bezier(0.16, 0.84, 0.44, 1) 0.35s;
+  }
+
+  .exp-card.in-view .exp-content {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .exp-card-reverse .exp-content {
+    transform: translateX(-36px);
+  }
+
+  .exp-card-reverse.in-view .exp-content {
+    transform: translateX(0);
+  }
+
+  .exp-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px 24px;
+    margin-bottom: 18px;
+  }
+
+  .exp-head h3 {
+    font-family: "Anton", "Poppins", sans-serif;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: -0.01em;
+    font-size: clamp(22px, 3vw, 30px);
+    color: var(--red);
+  }
+
+  .exp-company {
+    margin-top: 4px;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--white);
+  }
+
+  .exp-location {
+    margin-top: 2px;
+    font-size: 13px;
+    color: var(--gray);
+  }
+
+  .exp-date-range {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gray);
+    white-space: nowrap;
+  }
+
+  .exp-bullets {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .exp-bullets li {
+    position: relative;
+    padding-left: 20px;
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--gray);
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+
+  .exp-card.in-view .exp-bullets li {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .exp-bullets li:nth-child(1) { transition-delay: 0.5s; }
+  .exp-bullets li:nth-child(2) { transition-delay: 0.62s; }
+  .exp-bullets li:nth-child(3) { transition-delay: 0.74s; }
+  .exp-bullets li:nth-child(4) { transition-delay: 0.86s; }
+
+  .exp-bullets li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 8px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--red);
+  }
+
+  /* ============ SELECTED PROJECTS ============ */
+  /* Two independent infinite marquees, scrolling opposite directions.
+     Each track's card list is duplicated once in the markup and
+     animated by exactly one set's width, looping seamlessly and
+     continuously — including while hovering a card. */
+
+  .projects-marquee {
+    overflow: hidden;
+    margin: 0 -56px;
+    padding: 0 56px;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+  }
+
+  .projects-marquee + .projects-marquee {
+    margin-top: 28px;
+  }
+
+  .projects-track {
+    display: flex;
+    width: max-content;
+    gap: 28px;
+    animation: projects-scroll 42s linear infinite;
+  }
+
+  .projects-track.reverse {
+    animation-direction: reverse;
+  }
+
+  @keyframes projects-scroll {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  .project-card {
+    flex: 0 0 400px;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    overflow: hidden;
+  }
+
+  .project-card .proj-image {
+    height: 240px;
+    background-size: cover;
+    background-position: center;
+  }
+
+  .project-card .proj-body {
+    padding: 26px;
+  }
+
+  .project-card .title {
+    margin-top: 14px;
+    font-family: "Anton", "Poppins", sans-serif;
+    font-size: 22px;
+    font-weight: 400;
+    text-transform: uppercase;
+    line-height: 1.15;
+    color: var(--red);
+  }
+
+  .project-card .subtitle {
+    margin-top: 10px;
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--gray);
+  }
+
+  /* ============ EDUCATION / SKILLS / PROCESS / QUOTE ============ */
+
+  .about-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.1fr 0.75fr;
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .about-col {
+    padding: 48px 40px;
+  }
+
+  .about-col + .about-col {
+    border-left: 1px solid var(--border);
+  }
+
+  .about-col h3 {
+    font-family: "Anton", "Poppins", sans-serif;
+    font-size: 24px;
+    font-weight: 400;
+    text-transform: uppercase;
+    margin-bottom: 28px;
+  }
+
+  .label-red {
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-bottom: 14px;
+  }
+
+  .edu-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+    opacity: 0;
+    transform: translateX(-24px);
+    transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.16, 0.84, 0.44, 1);
+  }
+
+  .about-col.in-view .edu-item {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .edu-item .name {
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .edu-item .org {
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--gray);
+  }
+
+  .edu-item .year {
+    font-family: "Anton", "Poppins", sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--red);
+    white-space: nowrap;
+  }
+
+  .skills-tags {
+    margin-top: 30px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .skills-tags span {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--white);
+    opacity: 0;
+    transform: scale(0.85) translateY(8px);
+    transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+                border-color 0.3s ease, color 0.3s ease;
+    transition-delay: calc(var(--i, 0) * 0.05s);
+  }
+
+  .about-col.in-view .skills-tags span {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+
+  .skills-tags span:hover {
+    border-color: var(--red);
+    color: var(--red);
+  }
+
+  .process-item {
+    display: flex;
+    gap: 18px;
+    position: relative;
+    padding-bottom: 30px;
+    opacity: 0;
+    transform: translateX(-20px);
+    transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.16, 0.84, 0.44, 1);
+  }
+
+  .about-col.in-view .process-item {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .process-item:nth-child(1) { transition-delay: 0.05s; }
+  .process-item:nth-child(2) { transition-delay: 0.25s; }
+  .process-item:nth-child(3) { transition-delay: 0.45s; }
+  .process-item:nth-child(4) { transition-delay: 0.65s; }
+  .process-item:nth-child(5) { transition-delay: 0.85s; }
+
+  /* The connecting line draws downward right after its item lands. */
+  .process-item::before {
+    content: "";
+    position: absolute;
+    left: 19px;
+    top: 42px;
+    bottom: 0;
+    width: 1px;
+    background: var(--border);
+    transform: scaleY(0);
+    transform-origin: top;
+    transition: transform 0.5s cubic-bezier(0.16, 0.84, 0.44, 1);
+  }
+
+  .about-col.in-view .process-item::before {
+    transform: scaleY(1);
+  }
+
+  .process-item:nth-child(1)::before { transition-delay: 0.25s; }
+  .process-item:nth-child(2)::before { transition-delay: 0.45s; }
+  .process-item:nth-child(3)::before { transition-delay: 0.65s; }
+  .process-item:nth-child(4)::before { transition-delay: 0.85s; }
+
+  .process-item:last-child::before { display: none; }
+  .process-item:last-child { padding-bottom: 0; }
+
+  .process-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--red);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transform: scale(0.5);
+    transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition-delay: inherit;
+  }
+
+  .about-col.in-view .process-icon {
+    transform: scale(1);
+  }
+
+  .process-num {
+    font-family: "Anton", "Poppins", sans-serif;
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--red);
+  }
+
+  .process-title {
+    font-size: 14px;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-top: 8px;
+  }
+
+  .process-desc {
+    margin-top: 6px;
+    font-size: 13px;
+    line-height: 1.55;
+    white-space: nowrap;
+    color: var(--gray);
+  }
+
+  .quote-col {
+    background: linear-gradient(160deg, var(--red) 0%, #4a0d0a 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .quote-mark {
+    font-size: 48px;
+    font-weight: 800;
+    line-height: 1;
+    font-family: Georgia, serif;
+    display: inline-block;
+    opacity: 0;
+    transform: scale(0.3) rotate(-20deg);
+    transition: opacity 0.5s ease, transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .quote-col.in-view .quote-mark {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+
+  .quote-text {
+    margin-top: 20px;
+    font-size: 19px;
+    font-weight: 700;
+    line-height: 1.4;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease 0.15s, transform 0.6s cubic-bezier(0.16, 0.84, 0.44, 1) 0.15s;
+  }
+
+  .quote-col.in-view .quote-text {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .quote-sign {
+    margin-top: 18px;
+    font-size: 30px;
+    font-weight: 600;
+    font-family: "Caveat", cursive;
+    display: inline-block;
+    opacity: 0;
+    clip-path: inset(0 100% 0 0);
+    transition: opacity 0.3s ease 0.45s, clip-path 0.8s cubic-bezier(0.16, 0.84, 0.44, 1) 0.45s;
+  }
+
+  .quote-col.in-view .quote-sign {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+  }
+
+  .quote-cta {
+    margin-top: 40px;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.6s ease 0.65s, transform 0.6s ease 0.65s;
+  }
+
+  .quote-col.in-view .quote-cta {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .quote-cta svg {
+    animation: quote-sparkle 2.2s ease-in-out infinite;
+    animation-play-state: paused;
+  }
+
+  .quote-col.in-view .quote-cta svg {
+    animation-play-state: running;
+  }
+
+  @keyframes quote-sparkle {
+    0%, 100% { transform: scale(1) rotate(0deg); }
+    50% { transform: scale(1.25) rotate(15deg); }
+  }
+
+  /* ============ CONTACT / FOOTER ============ */
+
+  .contact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    justify-content: space-between;
+    gap: clamp(48px, 10vw, 140px);
+    align-items: center;
+  }
+
+  .contact-heading h2 {
+    font-family: "Anton", "Poppins", sans-serif;
+    font-size: clamp(32px, 4vw, 46px);
+    font-weight: 400;
+    text-transform: uppercase;
+    line-height: 1.05;
+  }
+
+  .contact-heading p {
+    margin-top: 18px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--gray);
+    max-width: 420px;
+  }
+
+  .contact-heading .cta {
+    margin-top: 26px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--red);
+  }
+
+  .contact-list {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 22px;
+    justify-self: end;
+    margin-left: auto;
+    text-align: right;
+  }
+
+  .contact-row {
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: center;
+    gap: 16px;
+    font-size: 14px;
+  }
+
+  .contact-row a:hover {
+    color: var(--red);
+  }
+
+  .contact-row .icon-ring {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  footer {
+    position: relative;
+    z-index: 1;
+    padding: 24px 56px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    font-size: 12px;
+    color: var(--gray);
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.85);
+  }
+
+  /* ============ SCROLL-LINKED REVEALS ============ */
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(48px);
+    transition: opacity 0.8s cubic-bezier(0.16, 0.84, 0.44, 1),
+                transform 0.8s cubic-bezier(0.16, 0.84, 0.44, 1);
+  }
+
+  .reveal.in-view {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .reveal-delay-1 { transition-delay: 0.1s; }
+  .reveal-delay-2 { transition-delay: 0.2s; }
+  .reveal-delay-3 { transition-delay: 0.3s; }
+
+  /* Extra punch for big display headlines: scales in from slightly
+     small/low instead of just fading up. */
+  .reveal-scale {
+    transform: translateY(48px) scale(0.9);
+    transition: opacity 0.9s cubic-bezier(0.16, 0.84, 0.44, 1),
+                transform 0.9s cubic-bezier(0.16, 0.84, 0.44, 1);
+  }
+
+  .reveal-scale.in-view {
+    transform: translateY(0) scale(1);
+  }
+
+  @media (max-width: 900px) {
+    section { padding: 60px 24px; }
+    .hero { padding: 130px 24px 24px; }
+    .hero-reveal-row { flex-direction: column; }
+    .hero-stats { flex-direction: row; text-align: left; gap: 24px; }
+    .hero-stats .stat + .stat { border-top: none; border-left: 1px solid var(--border); padding-top: 0; padding-left: 18px; }
+    .projects-marquee { margin: 0 -24px; padding: 0 24px; }
+    .project-card { flex-basis: 260px; }
+    .about-grid { grid-template-columns: 1fr; }
+    .about-col + .about-col { border-left: none; border-top: 1px solid var(--border); }
+    .process-desc { white-space: normal; }
+    .contact-grid { grid-template-columns: 1fr; }
+    .contact-list {
+      align-items: flex-start;
+      justify-self: start;
+      margin-left: 0;
+      text-align: left;
+    }
+    .contact-row { flex-direction: row; }
+    .exp-body,
+    .exp-card-reverse .exp-body {
+      grid-template-columns: 1fr;
+    }
+    .exp-card-reverse .exp-content { order: 0; }
+    .exp-media { max-width: 220px; margin: 0 auto; }
+  }
+
+  @media (max-width: 640px) {
+    .site-header {
+      grid-template-columns: 1fr auto;
+      padding: 18px 20px;
+    }
+
+    /* "Available for Freelance" vanishes on phone; only the role tag
+       and the hamburger toggle remain in the bar. */
+    .header-right {
+      display: none;
+    }
+
+    .nav-toggle {
+      display: flex;
+    }
+
+    /* The nav becomes a full-screen menu, opened by the hamburger. */
+    .site-nav {
+      position: fixed;
+      inset: 0;
+      z-index: 4;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 32px;
+      background: rgba(6, 6, 6, 0.97);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-12px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    .site-nav.is-open {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+
+    .site-nav a {
+      font-size: 22px;
+    }
+
+    .hero { padding-top: 190px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-stage">
+  <canvas id="frame-canvas"></canvas>
+</div>
+
+<header class="site-header">
+  <div class="header-left">
+    <div class="eyebrow role-red">Mechanical Engineer</div>
+    <div class="eyebrow">Automation &amp; Data</div>
+  </div>
+
+  <nav class="site-nav" id="siteNav">
+    <a href="#about">About</a>
+    <a href="#work">Work</a>
+    <a href="#contact">Contact</a>
+  </nav>
+
+  <div class="header-right eyebrow">
+    <span>Open to Opportunities</span>
+    <svg class="icon-circle" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2"><path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8z"/></svg>
+  </div>
+
+  <button class="nav-toggle" id="navToggle" type="button" aria-label="Toggle menu" aria-expanded="false" aria-controls="siteNav">
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
+</header>
+
+<div class="page">
+
+<section class="hero">
+
+  <div class="hero-fold-spacer"></div>
+
+  <div class="hero-main">
+    <div class="hero-intro">
+      <div class="hello">Hello, I'm</div>
+      <h1>Vivek<br />Battu</h1>
+    </div>
+
+    <div class="hero-reveal-row">
+      <div class="hero-reveal">
+        <div class="role-line">Mechanical Engineer &amp;<br />Automation Specialist</div>
+        <p>I design, develop, and optimize complex mechanical systems — combining strong CAD fundamentals with data engineering and automation to improve operations and drive quality.</p>
+        <div class="worldwide">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 4 6 4 9s-1.5 6.4-4 9c-2.5-2.6-4-6-4-9s1.5-6.4 4-9z"/></svg>
+          <span>Available Worldwide</span>
+        </div>
+      </div>
+
+      <div class="hero-stats">
+        <div class="stat">
+          <div class="num" data-target="6">0+</div>
+          <div class="label">Years Experience</div>
+        </div>
+        <div class="stat">
+          <div class="num" data-target="24">0+</div>
+          <div class="label">Projects Completed</div>
+        </div>
+        <div class="stat">
+          <div class="num" data-target="117">0+</div>
+          <div class="label">Happy Clients</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-reserve"></div>
+</section>
+
+<section class="about-me" id="about">
+  <div class="about-me-inner">
+    <h2 class="about-me-title reveal reveal-scale">About Me</h2>
+    <div class="about-me-sign reveal reveal-delay-1">Vivek</div>
+    <p class="about-me-text reveal reveal-delay-2">Mechanical Engineer with 6+ years of experience in designing, developing, and optimizing complex systems. Combines strong fundamentals in mechanical design and CAD tools with advanced capabilities in data engineering, automation, and analytics to optimize operations, ensure quality control, and drive collaborative project success.</p>
+  </div>
+</section>
+
+<section class="experience" id="experience">
+  <div class="section-head reveal">
+    <h2>Work Experience</h2>
+    <div class="rule"></div>
+  </div>
+
+  <div class="exp-list">
+    <div class="exp-card reveal">
+      <div class="exp-body">
+        <div class="exp-media">
+          <img src="assets/gold%20eagle.jpg" alt="Eagle Distribution logo" />
+        </div>
+        <div class="exp-content">
+          <div class="exp-head">
+            <div>
+              <h3>Senior Business Analyst</h3>
+              <div class="exp-company">Eagle Distribution</div>
+              <div class="exp-location">Clifton, NJ</div>
+            </div>
+            <div class="exp-date-range">Dec 2023 - Dec 2025</div>
+          </div>
+          <ul class="exp-bullets">
+            <li>Utilized AutoCAD and SolidWorks to execute core mechanical design deliverables and coordinate technical files across cross-functional teams.</li>
+            <li>Developed automated data validation and reconciliation scripts to streamline QA/QC, decreasing manual quality assurance effort by 60% while maintaining 98% accuracy.</li>
+            <li>Architected program data zones and designed highly interactive Power BI dashboards that generated 40% efficiency gains for program planning and decision support.</li>
+            <li>Optimized complex PySpark data workflows with caching and partitioning, leading to 30-40% improvement in query performance and reporting turnaround.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="exp-card exp-card-reverse reveal reveal-delay-1">
+      <div class="exp-body">
+        <div class="exp-content">
+          <div class="exp-head">
+            <div>
+              <h3>Mechanical Engineer</h3>
+              <div class="exp-company">L&amp;T METRO</div>
+              <div class="exp-location">Hyderabad</div>
+            </div>
+            <div class="exp-date-range">May 2019 - Apr 2023</div>
+          </div>
+          <ul class="exp-bullets">
+            <li>Designed and optimized data models and developed Python-based automation scripts to improve operations and safety pipeline visibility.</li>
+            <li>Consolidated critical workflow information on AWS (S3, Glue, Redshift, Athena), cutting technical processing and retrieval times by 40%.</li>
+            <li>Built operational performance and metric dashboards, securing 25% operational efficiency gains across project planning workflows.</li>
+          </ul>
+        </div>
+        <div class="exp-media">
+          <img src="assets/L_T.jpg" alt="L&amp;T METRO logo" />
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="projects" id="work">
+  <div class="section-head reveal">
+    <h2>Selected Projects</h2>
+    <div class="rule"></div>
+  </div>
+
+  <div class="projects-marquee reveal">
+    <div class="projects-track" id="projectsTrackA">
+      <div class="project-card">
+        <div class="proj-image" style="background-image:url('https://images.unsplash.com/photo-1604187351574-c75ca79f5807?fm=jpg&amp;q=60&amp;w=1200&amp;auto=format&amp;fit=crop')"></div>
+        <div class="proj-body">
+          <div class="title">Waste Plastic to 3D Printing Filament Machine</div>
+          <div class="subtitle">Combines mechanical design, manufacturing, sustainability, heating/extrusion, and automation.</div>
+        </div>
+      </div>
+      <div class="project-card">
+        <div class="proj-image" style="background-image:url('https://images.pexels.com/photos/34207369/pexels-photo-34207369.jpeg?w=1200')"></div>
+        <div class="proj-body">
+          <div class="title">Pneumatic Pick-and-Place Robot</div>
+          <div class="subtitle">Excellent combination of mechanical mechanisms, pneumatics, automation, and industrial applications.</div>
+        </div>
+      </div>
+      <div class="project-card">
+        <div class="proj-image" style="background-image:url('https://images.unsplash.com/photo-1701328778019-e95dedbf5346?fm=jpg&amp;q=60&amp;w=1200&amp;auto=format&amp;fit=crop')"></div>
+        <div class="proj-body">
+          <div class="title">Automatic Material Sorting Machine</div>
+          <div class="subtitle">Shows conveyor design, sensors, actuators, automation, and manufacturing knowledge.</div>
+        </div>
+      </div>
+      <div class="project-card">
+        <div class="proj-image" style="background-image:url('https://images.unsplash.com/photo-1717386255773-a456c611dc4e?fm=jpg&amp;q=60&amp;w=1200&amp;auto=format&amp;fit=crop')"></div>
+        <div class="proj-body">
+          <div class="title">Vibration-Based Machine Fault Detection System</div>
+          <div class="subtitle">Strong industrial project involving rotating machinery, vibration analysis, sensors, and predictive maintenance.</div>
+        </div>
+      </div>
+      <!-- Duplicate set (hidden from assistive tech) injected by JS for a seamless loop -->
+    </div>
+  </div>
+
+  <div class="projects-marquee reveal reveal-delay-1">
+    <div class="projects-track reverse" id="projectsTrackB">
+      <div class="project-card">
+        <div class="proj-image" style="background-image:url('https://images.pexels.com/photos/8853509/pexels-photo-8853509.jpeg?w=1200')"></div>
+        <div class="proj-body">
+          <div class="title">Automatic Solar Tracking System</div>
+          <div class="subtitle">Combines mechanical movement, renewable energy, sensors, control systems, and structural design.</div>
+        </div>
+      </div>
+      <div class="project-card">
+        <div class="proj-image" style="background-image:url('https://images.pexels.com/photos/15884318/pexels-photo-15884318.jpeg?w=1200')"></div>
+        <div class="proj-body">
+          <div class="title">Regenerative Braking System for E-Bikes</div>
+          <div class="subtitle">Good automotive/mechanical project involving energy recovery, braking, motors, and battery systems.</div>
+        </div>
+      </div>
+      <div class="project-card">
+        <div class="proj-image" style="background-image:url('https://images.pexels.com/photos/33031012/pexels-photo-33031012.jpeg?w=1200')"></div>
+        <div class="proj-body">
+          <div class="title">Automatic Seed Sowing Machine</div>
+          <div class="subtitle">Practical agricultural-mechanical application involving mechanisms, transmission, fabrication, and field testing.</div>
+        </div>
+      </div>
+      <div class="project-card">
+        <div class="proj-image" style="background-image:url('https://images.unsplash.com/photo-1717386255773-1e3037c81788?fm=jpg&amp;q=60&amp;w=1200&amp;auto=format&amp;fit=crop')"></div>
+        <div class="proj-body">
+          <div class="title">Mini CNC Plotter</div>
+          <div class="subtitle">Demonstrates mechanical motion systems, CAD/fabrication, stepper motors, CNC concepts, and precision.</div>
+        </div>
+      </div>
+      <!-- Duplicate set (hidden from assistive tech) injected by JS for a seamless loop -->
+    </div>
+  </div>
+</section>
+
+<section class="about">
+  <div class="about-grid">
+    <div class="about-col reveal">
+      <h3>Education &amp; Skills</h3>
+
+      <div class="label-red">Education</div>
+      <div class="edu-item">
+        <div>
+          <div class="name">B.S. in Mechanical Engineering &amp; M.S. in Engineering Industrial Management</div>
+          <div class="org">NJIT – Newark College of Engineering</div>
+        </div>
+        <div class="year">2026</div>
+      </div>
+
+      <div class="label-red" style="margin-top: 28px;">Skills</div>
+      <div class="skills-tags">
+        <span>AutoCAD</span>
+        <span>SolidWorks</span>
+        <span>Mechanical Design</span>
+        <span>GD&amp;T</span>
+        <span>Finite Element Analysis (FEA)</span>
+        <span>DFMA</span>
+        <span>Lean Six Sigma</span>
+        <span>Root Cause Analysis</span>
+        <span>MATLAB</span>
+        <span>Python</span>
+        <span>PySpark</span>
+        <span>Power BI</span>
+        <span>SQL</span>
+        <span>AWS (S3, Glue, Redshift, Athena)</span>
+        <span>Data Automation</span>
+        <span>QA / QC</span>
+        <span>Process Optimization</span>
+      </div>
+    </div>
+
+    <div class="about-col reveal reveal-delay-1">
+      <h3>Work Process</h3>
+
+      <div class="process-item">
+        <div class="process-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        </div>
+        <div>
+          <div class="process-num">01</div>
+          <div class="process-title">Discover</div>
+          <div class="process-desc">Understanding requirements and project goals.</div>
+        </div>
+      </div>
+
+      <div class="process-item">
+        <div class="process-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2"><path d="M9 18h6M10 21h4M12 3a6 6 0 00-4 10.5c.6.6 1 1.4 1 2.5h6c0-1.1.4-1.9 1-2.5A6 6 0 0012 3z"/></svg>
+        </div>
+        <div>
+          <div class="process-num">02</div>
+          <div class="process-title">Design</div>
+          <div class="process-desc">CAD modeling with SolidWorks and AutoCAD.</div>
+        </div>
+      </div>
+
+      <div class="process-item">
+        <div class="process-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2"><path d="M17 3l4 4-11 11H6v-4z"/></svg>
+        </div>
+        <div>
+          <div class="process-num">03</div>
+          <div class="process-title">Model &amp; Analyze</div>
+          <div class="process-desc">Building models and simulations to validate design.</div>
+        </div>
+      </div>
+
+      <div class="process-item">
+        <div class="process-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2"><path d="M8 4l-6 8 6 8M16 4l6 8-6 8"/></svg>
+        </div>
+        <div>
+          <div class="process-num">04</div>
+          <div class="process-title">Automate</div>
+          <div class="process-desc">Automating workflows with Python and PySpark.</div>
+        </div>
+      </div>
+
+      <div class="process-item">
+        <div class="process-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/></svg>
+        </div>
+        <div>
+          <div class="process-num">05</div>
+          <div class="process-title">Deliver</div>
+          <div class="process-desc">Deploying dashboards that drive efficiency.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="about-col quote-col reveal reveal-delay-2">
+      <div>
+        <div class="quote-mark">&ldquo;</div>
+        <div class="quote-text">Good design is not just how it looks, but how it works.</div>
+        <div class="quote-sign">Vivek</div>
+      </div>
+      <div class="quote-cta">
+        Let's Create Something Great Together
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8z"/></svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="contact" id="contact">
+  <div class="contact-grid">
+    <div class="contact-heading reveal">
+      <h2>Let's Work<br />Together</h2>
+      <p>I'm currently open for new projects and collaborations. Let's create something amazing that drives results.</p>
+      <a class="cta" href="#">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        Available for Freelance
+      </a>
+    </div>
+
+    <div class="contact-list reveal reveal-delay-1">
+      <div class="contact-row">
+        <div class="icon-ring">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
+        </div>
+        <a href="mailto:mevivekbattu@gmail.com">mevivekbattu@gmail.com</a>
+      </div>
+      <div class="contact-row">
+        <div class="icon-ring">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3.1 19.5 19.5 0 01-6-6A19.8 19.8 0 012.1 4.2 2 2 0 014.1 2h3a2 2 0 012 1.7c.1.9.3 1.8.6 2.7a2 2 0 01-.4 2.1L8 9.9a16 16 0 006 6l1.4-1.4a2 2 0 012.1-.4c.9.3 1.8.5 2.7.6a2 2 0 011.7 2.1z"/></svg>
+        </div>
+        <a href="tel:+19736818056">+1 (973)-681-8056</a>
+      </div>
+      <div class="contact-row">
+        <div class="icon-ring">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2"><path d="M12 22s7-6.3 7-12a7 7 0 10-14 0c0 5.7 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg>
+        </div>
+        <span>Harrison, New York</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<footer>© 2026 Vivek Battu. All rights reserved.</footer>
+
+<script>
+(() => {
+  const FRAME_COUNT = 300;
+  const FRAME_PATH = (i) =>
+    `ezgif-5c0553f52dbcdda4-jpg/ezgif-frame-${String(i).padStart(3, "0")}.jpg`;
+
+  // Duplicate each marquee's project cards once so the CSS animation
+  // (translateX to/from -50%) loops seamlessly, instead of hand-
+  // maintaining two copies of each row in the markup.
+  ["projectsTrackA", "projectsTrackB"].forEach((id) => {
+    const track = document.getElementById(id);
+    if (!track) return;
+    Array.from(track.children).forEach((card) => {
+      const clone = card.cloneNode(true);
+      clone.setAttribute("aria-hidden", "true");
+      clone.querySelectorAll("a, button").forEach((el) => el.setAttribute("tabindex", "-1"));
+      track.appendChild(clone);
+    });
+  });
+
+  // Phone-menu hamburger: toggles the full-screen nav, and closes it
+  // again once a link is tapped or the escape key is pressed.
+  const siteHeader = document.querySelector(".site-header");
+  const navToggle = document.getElementById("navToggle");
+  const siteNav = document.getElementById("siteNav");
+
+  function setNavOpen(open) {
+    siteNav.classList.toggle("is-open", open);
+    navToggle.classList.toggle("is-open", open);
+    navToggle.setAttribute("aria-expanded", String(open));
+  }
+
+  navToggle.addEventListener("click", () => {
+    setNavOpen(!siteNav.classList.contains("is-open"));
+  });
+
+  siteNav.querySelectorAll("a").forEach((link) => {
+    link.addEventListener("click", () => setNavOpen(false));
+  });
+
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") setNavOpen(false);
+  });
+
+  const canvas = document.getElementById("frame-canvas");
+  const ctx = canvas.getContext("2d");
+  const hero = document.querySelector(".hero");
+  const heroRevealRow = hero.querySelector(".hero-reveal-row");
+  const heroRoleReveal = hero.querySelectorAll(".role-line, .hero-reveal p, .worldwide");
+  const heroStats = hero.querySelector(".hero-stats");
+
+  // The reveal row is absolutely positioned right under the name so the
+  // name itself can stay pinned to the bottom of the first viewport at
+  // load. Measure its real (content) height and feed it back in as extra
+  // reserved space at the end of the hero section, so nothing below the
+  // hero (the Projects section) ever gets covered by it once it reveals.
+  function updateHeroReserve() {
+    document.documentElement.style.setProperty(
+      "--reveal-reserve",
+      `${heroRevealRow.offsetHeight}px`
+    );
+  }
+  updateHeroReserve();
+  window.addEventListener("resize", updateHeroReserve);
+  if (window.ResizeObserver) {
+    new ResizeObserver(updateHeroReserve).observe(heroRevealRow);
+  }
+
+  const images = new Array(FRAME_COUNT);
+  let loadedCount = 0;
+
+  function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    drawFrame(currentFrame);
+  }
+
+  function drawImageCover(img) {
+    const canvasRatio = canvas.width / canvas.height;
+    const imgRatio = img.width / img.height;
+    let sx, sy, sw, sh;
+
+    if (imgRatio > canvasRatio) {
+      // Window is relatively taller than the frame: crop the sides,
+      // keep full height.
+      sh = img.height;
+      sw = sh * canvasRatio;
+      sx = (img.width - sw) / 2;
+      sy = 0;
+    } else {
+      // Window is relatively wider than the frame: crop top/bottom.
+      // Anchor to the top so the head is never cut off.
+      sw = img.width;
+      sh = sw / canvasRatio;
+      sx = 0;
+      sy = 0;
+    }
+
+    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+  }
+
+  let currentFrame = 0;
+
+  function drawFrame(index) {
+    const img = images[index];
+    if (img && img.complete && img.naturalWidth) {
+      drawImageCover(img);
+    }
+  }
+
+  // Preload all frames. Draw as soon as the first one is ready,
+  // then keep drawing the target frame as more arrive.
+  for (let i = 0; i < FRAME_COUNT; i++) {
+    const img = new Image();
+    img.src = FRAME_PATH(i + 1);
+    img.onload = () => {
+      loadedCount++;
+      if (i === currentFrame) drawFrame(currentFrame);
+    };
+    images[i] = img;
+  }
+
+  let targetFrame = 0;
+  let ticking = false;
+
+  // The animation now plays across the ENTIRE page's scroll distance,
+  // not just the hero — the canvas is a fixed background behind every
+  // section, so it keeps advancing frames as you scroll through
+  // Projects, About and Contact too.
+  let lastScrollY = window.scrollY;
+
+  function updateScroll() {
+    const scrolled = window.scrollY;
+    const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+    const progress = maxScroll > 0 ? Math.min(Math.max(scrolled / maxScroll, 0), 1) : 0;
+    targetFrame = Math.round(progress * (FRAME_COUNT - 1));
+
+    // The hero content itself only parallaxes out over its own height
+    // (roughly one viewport), independent of the total page length.
+    const heroExitDistance = window.innerHeight * 0.9;
+    const heroProgress = Math.min(scrolled / heroExitDistance, 1);
+    updateParallax(heroProgress);
+
+    // Header hides on any downward scroll, reappears the moment you
+    // scroll back up. Stays put while the mobile menu is open.
+    const scrollingDown = scrolled > lastScrollY;
+    const menuOpen = siteNav.classList.contains("is-open");
+    siteHeader.classList.toggle("header-hidden", scrollingDown && !menuOpen);
+    lastScrollY = scrolled;
+
+    ticking = false;
+  }
+
+  // Scroll-linked parallax for the hero content. "Hello, I'm" and the
+  // name are visible immediately at page load. Everything below the
+  // name (role line, description, worldwide tag) and the stats column
+  // all start hidden and reveal in together as scrolling begins.
+  function updateParallax(heroProgress) {
+    const roleP = Math.min(heroProgress / 0.5, 1);
+    heroRoleReveal.forEach((el) => {
+      el.style.transform = `translateY(${(1 - roleP) * 50}px)`;
+      el.style.opacity = String(roleP);
+    });
+
+    const statsP = Math.min(heroProgress / 0.5, 1);
+    heroStats.style.transform = `translateY(${(1 - statsP) * 50}px)`;
+    heroStats.style.opacity = String(statsP);
+
+    if (statsP > 0 && !statsAnimated) {
+      statsAnimated = true;
+      animateStatNumbers();
+    }
+  }
+
+  // Counts each stat number up from 0 to its target the first time the
+  // stats become visible, instead of just appearing at full value.
+  let statsAnimated = false;
+
+  function animateStatNumbers() {
+    const numEls = heroStats.querySelectorAll(".num");
+    const duration = 3200;
+    const startTime = performance.now();
+
+    function tick(now) {
+      const t = Math.min((now - startTime) / duration, 1);
+      // Linear pacing (rather than ease-out) keeps the count-up steady
+      // and readable all the way through, instead of rushing early.
+      const eased = t;
+      numEls.forEach((el) => {
+        const target = parseInt(el.dataset.target, 10);
+        el.textContent = `${Math.round(eased * target)}+`;
+      });
+      if (t < 1) requestAnimationFrame(tick);
+    }
+
+    requestAnimationFrame(tick);
+  }
+
+  window.addEventListener("scroll", () => {
+    if (!ticking) {
+      requestAnimationFrame(updateScroll);
+      ticking = true;
+    }
+  }, { passive: true });
+
+  window.addEventListener("resize", resizeCanvas);
+
+  function render() {
+    if (currentFrame !== targetFrame) {
+      currentFrame = targetFrame;
+      drawFrame(currentFrame);
+    }
+    requestAnimationFrame(render);
+  }
+
+  resizeCanvas();
+  updateScroll();
+  render();
+
+  // Index each skill tag so its CSS pop-in transition-delay can stagger
+  // by position (see `calc(var(--i, 0) * 0.05s)` in the stylesheet).
+  document.querySelectorAll(".skills-tags").forEach((list) => {
+    Array.from(list.children).forEach((tag, i) => tag.style.setProperty("--i", i));
+  });
+
+  // Reveal each section's content as it scrolls into view.
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("in-view");
+        revealObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15, rootMargin: "0px 0px -80px 0px" });
+
+  document.querySelectorAll(".reveal").forEach((el) => revealObserver.observe(el));
+})();
+</script>
+
+</body>
+</html>
