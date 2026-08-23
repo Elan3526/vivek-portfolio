@@ -39,7 +39,10 @@
   ul { list-style: none; }
   a { color: inherit; text-decoration: none; }
 
-  html { scroll-behavior: smooth; }
+  /* Nav scrolling is fully hand-driven in JS (custom easing/duration) —
+     leaving this on made every programmatic scrollTo() call, even
+     behavior:"auto" ones, fight the browser's own smooth interpolation. */
+  html { scroll-behavior: auto; }
 
   /* Single header row: role tag (left), nav (true center), freelance
      availability (right). A 3-column grid — not flex space-between —
@@ -114,6 +117,8 @@
   /* Hamburger toggle: hidden on desktop, only shown below the phone
      breakpoint where the nav collapses into a full-screen menu. */
   .nav-toggle {
+    position: relative;
+    z-index: 11;
     display: none;
     flex-direction: column;
     justify-content: center;
@@ -1078,11 +1083,20 @@
       display: flex;
     }
 
-    /* The nav becomes a full-screen menu, opened by the hamburger. */
+    /* The nav becomes a full-screen menu, opened by the hamburger.
+       z-index is higher than .site-header (5) so the menu fully
+       covers the role tag instead of it bleeding through on top.
+       justify-self must be reset from the base rule's "center" —
+       left as-is, it makes even a position:fixed grid-item child
+       shrink-to-fit its content instead of stretching to inset:0. */
     .site-nav {
       position: fixed;
       inset: 0;
-      z-index: 4;
+      z-index: 10;
+      justify-self: stretch;
+      align-self: stretch;
+      width: 100vw;
+      height: 100vh;
       flex-direction: column;
       align-items: center;
       justify-content: center;
@@ -1094,6 +1108,13 @@
       pointer-events: none;
       transform: translateY(-12px);
       transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    /* The role tag hides while the menu is open so nothing shows
+       through/behind the full-screen overlay. */
+    .site-header.nav-is-open .header-left {
+      opacity: 0;
+      pointer-events: none;
     }
 
     .site-nav.is-open {
@@ -1190,7 +1211,7 @@
   </div>
 </section>
 
-<section class="experience" id="experience">
+<section class="experience" id="work">
   <div class="section-head reveal">
     <h2>Work Experience</h2>
     <div class="rule"></div>
@@ -1246,7 +1267,7 @@
   </div>
 </section>
 
-<section class="projects" id="work">
+<section class="projects" id="projects">
   <div class="section-head reveal">
     <h2>Selected Projects</h2>
     <div class="rule"></div>
@@ -1497,6 +1518,7 @@
   function setNavOpen(open) {
     siteNav.classList.toggle("is-open", open);
     navToggle.classList.toggle("is-open", open);
+    siteHeader.classList.toggle("nav-is-open", open);
     navToggle.setAttribute("aria-expanded", String(open));
   }
 
@@ -1504,19 +1526,27 @@
     setNavOpen(!siteNav.classList.contains("is-open"));
   });
 
-  // Eased, fixed-duration smooth scroll for nav clicks — the browser's
-  // native `scroll-behavior: smooth` varies in speed with distance and
-  // can feel like it "snaps" on longer jumps, especially competing with
-  // the per-frame canvas/parallax work already running on scroll.
+  // Nav clicks get a slow, custom-duration eased scroll. Native
+  // `scrollTo({behavior:'smooth'})` has no way to control its speed —
+  // it's quick and gets quicker on short hops — so a hand-rolled
+  // rAF loop is the only way to make it deliberately slow. Runs
+  // purely off requestAnimationFrame timestamps (not a frame counter),
+  // so it can't be thrown off by dropped frames.
   function smoothScrollTo(targetY, duration) {
     const startY = window.scrollY;
     const distance = targetY - startY;
+    if (Math.abs(distance) < 1) return;
     const startTime = performance.now();
 
     function step(now) {
       const t = Math.min((now - startTime) / duration, 1);
       const eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
-      window.scrollTo(0, startY + distance * eased);
+      // behavior:"auto" forces an instant jump for THIS call — without
+      // it, the page's `scroll-behavior: smooth` makes every one of
+      // these per-frame calls kick off its own browser-smooth-scroll,
+      // each interrupting the last before it can finish, which is what
+      // produced the "barely moves, then suddenly jumps" bug.
+      window.scrollTo({ top: startY + distance * eased, left: 0, behavior: "auto" });
       if (t < 1) requestAnimationFrame(step);
     }
 
@@ -1542,7 +1572,9 @@
       // page starts moving underneath it — otherwise both animate at
       // once and the scroll reads as an abrupt jump.
       const startDelay = wasOpen ? 320 : 0;
-      setTimeout(() => smoothScrollTo(Math.max(targetY, 0), 1000), startDelay);
+      setTimeout(() => {
+        smoothScrollTo(Math.max(targetY, 0), 1800);
+      }, startDelay);
     });
   });
 
