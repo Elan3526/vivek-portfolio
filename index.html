@@ -1504,8 +1504,46 @@
     setNavOpen(!siteNav.classList.contains("is-open"));
   });
 
+  // Eased, fixed-duration smooth scroll for nav clicks — the browser's
+  // native `scroll-behavior: smooth` varies in speed with distance and
+  // can feel like it "snaps" on longer jumps, especially competing with
+  // the per-frame canvas/parallax work already running on scroll.
+  function smoothScrollTo(targetY, duration) {
+    const startY = window.scrollY;
+    const distance = targetY - startY;
+    const startTime = performance.now();
+
+    function step(now) {
+      const t = Math.min((now - startTime) / duration, 1);
+      const eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+      window.scrollTo(0, startY + distance * eased);
+      if (t < 1) requestAnimationFrame(step);
+    }
+
+    requestAnimationFrame(step);
+  }
+
+  const HEADER_CLEARANCE = 24;
+
   siteNav.querySelectorAll("a").forEach((link) => {
-    link.addEventListener("click", () => setNavOpen(false));
+    link.addEventListener("click", (e) => {
+      const href = link.getAttribute("href") || "";
+      if (!href.startsWith("#")) return;
+
+      const target = document.querySelector(href);
+      if (!target) return;
+
+      e.preventDefault();
+      const wasOpen = siteNav.classList.contains("is-open");
+      setNavOpen(false);
+
+      const targetY = target.getBoundingClientRect().top + window.scrollY - HEADER_CLEARANCE;
+      // On phone, let the full-screen menu finish closing before the
+      // page starts moving underneath it — otherwise both animate at
+      // once and the scroll reads as an abrupt jump.
+      const startDelay = wasOpen ? 320 : 0;
+      setTimeout(() => smoothScrollTo(Math.max(targetY, 0), 1000), startDelay);
+    });
   });
 
   window.addEventListener("keydown", (e) => {
