@@ -473,6 +473,15 @@
     clip-path: inset(0 0 0 0);
   }
 
+  .exp-logo-text {
+    font-family: "Anton", "Poppins", sans-serif;
+    font-size: clamp(28px, 4vw, 48px);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #111;
+    text-align: center;
+  }
+
   .exp-media img {
     width: 100%;
     height: 100%;
@@ -1221,8 +1230,30 @@
     <div class="exp-card reveal">
       <div class="exp-body">
         <div class="exp-media">
-          <img src="assets/gold%20eagle.jpg" alt="Eagle Distribution logo" />
+          <!-- TODO: swap for a real logo, e.g. <img src="assets/hootboard.png" alt="HootBoard logo" /> -->
+          <div class="exp-logo-text">HootBoard</div>
         </div>
+        <div class="exp-content">
+          <div class="exp-head">
+            <div>
+              <h3>Industrial Design &amp; Business Analyst</h3>
+              <div class="exp-company">HootBoard</div>
+              <div class="exp-location">Skillman, NJ</div>
+            </div>
+            <div class="exp-date-range">Feb 2024 - Aug 2026</div>
+          </div>
+          <ul class="exp-bullets">
+            <li>Led industrial design and BIM coordination for modular manufacturing cells and automated warehouse layouts using SolidWorks, Revit, and Navisworks, resolving 95%+ of MEP/structural clashes pre-fabrication.</li>
+            <li>Translated throughput and ergonomic requirements into 3D equipment concepts, prototypes, and standardized BOMs, cutting prototyping and procurement lead times by 25%.</li>
+            <li>Built Power BI and SQL models linking BIM asset data with production capacity, equipment utilization, and CAPEX/OPEX projections to guide investment decisions.</li>
+            <li>Standardized DFMA, GD&amp;T, and ergonomic safety guidelines across custom workstations, improving assembly efficiency and operator workflow by 20%.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="exp-card exp-card-reverse reveal reveal-delay-1">
+      <div class="exp-body">
         <div class="exp-content">
           <div class="exp-head">
             <div>
@@ -1230,7 +1261,7 @@
               <div class="exp-company">Eagle Distribution</div>
               <div class="exp-location">Clifton, NJ</div>
             </div>
-            <div class="exp-date-range">Dec 2023 - Dec 2025</div>
+            <div class="exp-date-range">Dec 2023 - Jan 2024</div>
           </div>
           <ul class="exp-bullets">
             <li>Utilized AutoCAD and SolidWorks to execute core mechanical design deliverables and coordinate technical files across cross-functional teams.</li>
@@ -1239,11 +1270,17 @@
             <li>Optimized complex PySpark data workflows with caching and partitioning, leading to 30-40% improvement in query performance and reporting turnaround.</li>
           </ul>
         </div>
+        <div class="exp-media">
+          <img src="assets/gold%20eagle.jpg" alt="Eagle Distribution logo" />
+        </div>
       </div>
     </div>
 
-    <div class="exp-card exp-card-reverse reveal reveal-delay-1">
+    <div class="exp-card reveal">
       <div class="exp-body">
+        <div class="exp-media">
+          <img src="assets/L_T.jpg" alt="L&amp;T METRO logo" />
+        </div>
         <div class="exp-content">
           <div class="exp-head">
             <div>
@@ -1258,9 +1295,6 @@
             <li>Consolidated critical workflow information on AWS (S3, Glue, Redshift, Athena), cutting technical processing and retrieval times by 40%.</li>
             <li>Built operational performance and metric dashboards, securing 25% operational efficiency gains across project planning workflows.</li>
           </ul>
-        </div>
-        <div class="exp-media">
-          <img src="assets/L_T.jpg" alt="L&amp;T METRO logo" />
         </div>
       </div>
     </div>
